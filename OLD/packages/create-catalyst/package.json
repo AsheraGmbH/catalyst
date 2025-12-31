@@ -1,0 +1,58 @@
+{
+  "name": "@bigcommerce/create-catalyst",
+  "version": "0.20.0",
+  "type": "module",
+  "bin": "bin/index.cjs",
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "test": "jest",
+    "build": "tsup"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@commander-js/extra-typings": "^13.1.0",
+    "@iarna/toml": "^2.2.5",
+    "@inquirer/prompts": "^7.8.6",
+    "@segment/analytics-node": "^2.3.0",
+    "chalk": "^5.6.2",
+    "commander": "^13.1.0",
+    "conf": "^13.1.0",
+    "cross-spawn": "^7.0.6",
+    "dotenv": "^16.6.1",
+    "fs-extra": "^11.3.2",
+    "giget": "^1.2.5",
+    "lodash.kebabcase": "^4.1.1",
+    "nypm": "^0.5.4",
+    "open": "^10.2.0",
+    "ora": "^8.2.0",
+    "semver": "^7.7.2",
+    "std-env": "^3.9.0",
+    "zod": "^3.25.76",
+    "zod-validation-error": "^3.5.3"
+  },
+  "devDependencies": {
+    "@bigcommerce/eslint-config": "^2.11.0",
+    "@bigcommerce/eslint-config-catalyst": "workspace:^",
+    "@swc/core": "^1.13.19",
+    "@swc/jest": "^0.2.39",
+    "@types/cross-spawn": "^6.0.6",
+    "@types/fs-extra": "^11.0.4",
+    "@types/jest": "^29.5.14",
+    "@types/lodash.kebabcase": "^4.1.9",
+    "@types/node": "^20.19.17",
+    "@types/semver": "^7.7.1",
+    "eslint": "^8.57.1",
+    "jest": "^29.7.0",
+    "prettier": "^3.6.2",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  }
+}

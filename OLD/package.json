@@ -1,0 +1,36 @@
+{
+  "name": "@bigcommerce/catalyst",
+  "description": "Catalyst is BigCommerce's composable front-end framework designed for building custom ecommerce storefronts.",
+  "keywords": [
+    "bigcommerce",
+    "ecommerce",
+    "storefront",
+    "headless",
+    "composable",
+    "nextjs"
+  ],
+  "license": "MIT",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "dev": "dotenv -e .env.local -- turbo run dev",
+    "build": "dotenv -e .env.local -- turbo run build",
+    "postbuild": "node -e \"if(process.env.ANALYZE!=='true')process.exit(0);const fs=require('fs');const path=require('path');const src=path.join(process.cwd(),'core','.next','analyze');const dst=path.join(process.cwd(),'core','public','analyze');try{if(!fs.existsSync(src)){console.log('[analyze] no .next/analyze found at',src);process.exit(0);}fs.mkdirSync(dst,{recursive:true});for(const f of ['client.html','server.html','edge.html','nodejs.html']){const s=path.join(src,f);if(fs.existsSync(s)){fs.copyFileSync(s,path.join(dst,f));console.log('[analyze] copied',f);}else{console.log('[analyze] missing',f);}}}catch(e){console.error('[analyze] copy failed',e);process.exit(0);}\"",
+    "build:stub": "dotenv -e .env.stub -- pnpm --filter @bigcommerce/catalyst-client build && dotenv -e .env.stub -- pnpm --filter @bigcommerce/catalyst-core build",
+    "lint": "dotenv -e .env.local -- turbo lint",
+    "typecheck": "turbo typecheck"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
+    "dotenv-cli": "8.0.0",
+    "turbo": "^2.5.8",
+    "typescript": "5.7.3"
+  },
+  "dependencies": {
+    "next": "15.5.9",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  }
+}

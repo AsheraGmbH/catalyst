@@ -1,0 +1,10 @@
+packages:
+  - core
+  - packages/*
+
+onlyBuiltDependencies:
+  - '@swc/core'
+  - bufferutil
+  - esbuild
+  - sharp
+  - unrs-resolver
