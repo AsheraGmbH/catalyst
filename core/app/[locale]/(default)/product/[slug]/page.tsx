@@ -13,6 +13,18 @@ import { productCardTransformer } from '~/data-transformers/product-card-transfo
 import { productOptionsTransformer } from '~/data-transformers/product-options-transformer';
 import { getPreferredCurrencyCode } from '~/lib/currency';
 
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
+
+// Use client-side only component to prevent Next.js from trying to resolve CSS files during build
+const BuilderIoClientWrapper = dynamic(
+  () => import('~/lib/builder-io/BuilderIoClientWrapper'),
+  { 
+    ssr: false,
+    loading: () => null
+  }
+);
+
 import { addToCart } from './_actions/add-to-cart';
 import { submitReview } from './_actions/submit-review';
 import { ProductAnalyticsProvider } from './_components/product-analytics-provider';
@@ -529,6 +541,10 @@ export default async function Product({ params, searchParams }: Props) {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <BuilderIoClientWrapper slug={baseProduct.entityId.toString()} />
+      </Suspense>
+
       <ProductAnalyticsProvider data={streamableAnalyticsData}>
         <ProductDetail
           action={addToCart}

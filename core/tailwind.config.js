@@ -8,6 +8,15 @@ const config = {
   ],
   theme: {
     extend: {
+      boxShadow: {
+        glass: "0 0 5px 2px rgba(0,0,0,0.35)", // var(--shadow)
+      },
+      backdropBlur: {
+        16: "16px",
+      },
+      borderRadius: {
+        xl2: "16px",
+      },
       typography: {
         DEFAULT: {
           css: {
@@ -110,6 +119,9 @@ const config = {
         },
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        asheraBackground: '#121212',
+        glassbg: "rgba(12, 9, 9, 0.55)", // #0C0909 @ 55%
+        glassborder: "rgba(255,255,255,0.08)",
         contrast: {
           100: 'hsl(var(--contrast-100))',
           200: 'hsl(var(--contrast-200))',

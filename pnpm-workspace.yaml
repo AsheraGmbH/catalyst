@@ -11,6 +11,7 @@ onlyBuiltDependencies:
   - protobufjs
   - puppeteer
   - sharp
+  - unrs-resolver
   - workerd
 
 publicHoistPattern:

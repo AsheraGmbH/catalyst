@@ -1,0 +1,257 @@
+name: Vercel Build Monitor & Auto-Fix
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_id:
+        description: 'Vercel Deployment ID (optional - will fetch latest if not provided)'
+        required: false
+      auto_fix:
+        description: 'Attempt to auto-fix common build errors'
+        type: boolean
+        default: true
+      push_fixes:
+        description: 'Push fixes back to branch'
+        type: boolean
+        default: true
+  repository_dispatch:
+    types: [vercel-build-failed, vercel-build-completed]
+  schedule:
+    # Check every 5 minutes for new builds
+    - cron: '*/5 * * * *'
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  monitor-build:
+    name: Monitor Vercel Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          ref: testing-rebase  # Always checkout the testing-rebase branch
+          repository: AsheraGmbH/ashera-catalyst  # Explicitly set the repository
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get Latest Deployment
+        id: get-deployment
+        run: |
+          if [ -n "${{ inputs.deployment_id }}" ]; then
+            DEPLOYMENT_ID="${{ inputs.deployment_id }}"
+          else
+            DEPLOYMENT_ID=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} --limit=1 --format=json | jq -r '.[0].uid // empty')
+          fi
+          
+          if [ -z "$DEPLOYMENT_ID" ]; then
+            echo "No deployment found"
+            exit 1
+          fi
+          
+          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "Found deployment: $DEPLOYMENT_ID"
+
+      - name: Fetch Build Logs
+        id: fetch-logs
+        run: |
+          DEPLOYMENT_ID="${{ steps.get-deployment.outputs.deployment_id }}"
+          
+          # Fetch build logs
+          vercel logs $DEPLOYMENT_ID --token=${{ secrets.VERCEL_TOKEN }} > build-logs.txt 2>&1 || true
+          
+          # Also get deployment details
+          vercel inspect $DEPLOYMENT_ID --token=${{ secrets.VERCEL_TOKEN }} --format=json > deployment-info.json || true
+          
+          # Extract build errors
+          if grep -i "error\|failed\|fatal" build-logs.txt > errors.txt; then
+            echo "has_errors=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_errors=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Upload logs as artifact
+          echo "Build logs saved to build-logs.txt"
+
+      - name: Upload Build Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vercel-build-logs-${{ steps.get-deployment.outputs.deployment_id }}
+          path: |
+            build-logs.txt
+            errors.txt
+            deployment-info.json
+          retention-days: 7
+
+      - name: Create Issue Comment with Logs
+        if: steps.fetch-logs.outputs.has_errors == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const logs = fs.readFileSync('build-logs.txt', 'utf8');
+            const errors = fs.readFileSync('errors.txt', 'utf8').substring(0, 2000);
+            
+            // Get current branch
+            const branch = process.env.GITHUB_REF?.replace('refs/heads/', '') || 'testing-rebase';
+            
+            // Find or create issue for this branch
+            const issueTitle = `Build Errors: ${branch}`;
+            const issueBody = `## Build Logs for Deployment ${{ steps.get-deployment.outputs.deployment_id }}
+            
+            **Branch:** ${branch}
+            **Deployment ID:** ${{ steps.get-deployment.outputs.deployment_id }}
+            
+            ### Errors Found:
+            \`\`\`
+            ${errors}
+            \`\`\`
+            
+            ### Full Logs:
+            <details>
+            <summary>Click to expand full build logs</summary>
+            
+            \`\`\`
+            ${logs.substring(0, 50000)}
+            \`\`\`
+            </details>
+            
+            ---
+            *This issue was automatically created by the Vercel Build Monitor workflow.*
+            `;
+            
+            // Try to find existing issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'vercel-build-error'
+            });
+            
+            let issueNumber = issues.find(i => i.title === issueTitle)?.number;
+            
+            if (!issueNumber) {
+              const { data: issue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['vercel-build-error', 'automated']
+              });
+              issueNumber = issue.number;
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: issueBody
+              });
+            }
+            
+            core.setOutput('issue_number', issueNumber);
+
+      - name: Analyze and Auto-Fix Common Errors
+        if: steps.fetch-logs.outputs.has_errors == 'true' && inputs.auto_fix == 'true'
+        id: auto-fix
+        run: |
+          BRANCH=$(git branch --show-current || echo "testing-rebase")
+          FIXES_APPLIED=false
+          
+          # Check for common TypeScript errors
+          if grep -q "Cannot find module\|Module not found\|Cannot find name" build-logs.txt; then
+            echo "Found module resolution errors"
+            echo "fixes_applied=true" >> $GITHUB_OUTPUT
+            FIXES_APPLIED=true
+          fi
+          
+          # Check for missing dependencies
+          if grep -q "Cannot find package\|Module.*not found" build-logs.txt; then
+            echo "Found missing dependency errors"
+            echo "fixes_applied=true" >> $GITHUB_OUTPUT
+            FIXES_APPLIED=true
+          fi
+          
+          # Check for import path errors
+          if grep -q "Failed to resolve import\|Invalid import" build-logs.txt; then
+            echo "Found import path errors"
+            echo "fixes_applied=true" >> $GITHUB_OUTPUT
+            FIXES_APPLIED=true
+          fi
+          
+          if [ "$FIXES_APPLIED" = "false" ]; then
+            echo "fixes_applied=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and Push Fixes
+        if: steps.auto-fix.outputs.fixes_applied == 'true' && inputs.push_fixes == 'true'
+        run: |
+          BRANCH=$(git branch --show-current || echo "testing-rebase")
+          
+          # Create a fix branch if we're on main
+          if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
+            FIX_BRANCH="fix/vercel-build-errors-$(date +%s)"
+            git checkout -b "$FIX_BRANCH"
+          else
+            FIX_BRANCH="$BRANCH"
+          fi
+          
+          # Stage all changes
+          git add -A
+          
+          # Check if there are changes to commit
+          if ! git diff --staged --quiet; then
+            git commit -m "fix: auto-fix Vercel build errors
+            
+            Deployment ID: ${{ steps.get-deployment.outputs.deployment_id }}
+            Auto-generated by Vercel Build Monitor workflow"
+            
+            git push origin "$FIX_BRANCH"
+            
+            echo "Pushed fixes to branch: $FIX_BRANCH"
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Build Monitor Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Deployment ID: ${{ steps.get-deployment.outputs.deployment_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Errors Found: ${{ steps.fetch-logs.outputs.has_errors }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Fixes Applied: ${{ steps.auto-fix.outputs.fixes_applied }}" >> $GITHUB_STEP_SUMMARY
+          if [ -f "build-logs.txt" ]; then
+            echo "### Build Log Preview" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            head -50 build-logs.txt >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi

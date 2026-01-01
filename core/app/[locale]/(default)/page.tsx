@@ -6,8 +6,10 @@ import { FeaturedProductCarousel } from '@/vibes/soul/sections/featured-product-
 import { FeaturedProductList } from '@/vibes/soul/sections/featured-product-list';
 import { getSessionCustomerAccessToken } from '~/auth';
 import { Subscribe } from '~/components/subscribe';
+import { WebflowCurrencySync } from '~/components/webflow-currency-sync';
 import { productCardTransformer } from '~/data-transformers/product-card-transformer';
 import { getPreferredCurrencyCode } from '~/lib/currency';
+import { getWebflowHtmlContent } from '~/lib/webflow-html';
 
 import { Slideshow } from './_components/slideshow';
 import { getPageData } from './page-data';
@@ -71,33 +73,45 @@ export default async function Home({ params }: Props) {
     return showNewsletterSignup;
   });
 
+  // Get webflow HTML content for home page
+  const webflowHtml = await getWebflowHtmlContent('index.html');
+
   return (
     <>
-      <Slideshow />
+      {webflowHtml ? (
+        <>
+          <WebflowCurrencySync />
+          <div dangerouslySetInnerHTML={{ __html: webflowHtml }} />
+        </>
+      ) : (
+        <>
+          <Slideshow />
 
-      <FeaturedProductList
-        cta={{ label: t('FeaturedProducts.cta'), href: '/shop-all' }}
-        description={t('FeaturedProducts.description')}
-        emptyStateSubtitle={t('FeaturedProducts.emptyStateSubtitle')}
-        emptyStateTitle={t('FeaturedProducts.emptyStateTitle')}
-        products={streamableFeaturedProducts}
-        title={t('FeaturedProducts.title')}
-      />
+          <FeaturedProductList
+            cta={{ label: t('FeaturedProducts.cta'), href: '/shop-all' }}
+            description={t('FeaturedProducts.description')}
+            emptyStateSubtitle={t('FeaturedProducts.emptyStateSubtitle')}
+            emptyStateTitle={t('FeaturedProducts.emptyStateTitle')}
+            products={streamableFeaturedProducts}
+            title={t('FeaturedProducts.title')}
+          />
 
-      <FeaturedProductCarousel
-        cta={{ label: t('NewestProducts.cta'), href: '/shop-all/?sort=newest' }}
-        description={t('NewestProducts.description')}
-        emptyStateSubtitle={t('NewestProducts.emptyStateSubtitle')}
-        emptyStateTitle={t('NewestProducts.emptyStateTitle')}
-        nextLabel={t('NewestProducts.nextProducts')}
-        previousLabel={t('NewestProducts.previousProducts')}
-        products={streamableNewestProducts}
-        title={t('NewestProducts.title')}
-      />
+          <FeaturedProductCarousel
+            cta={{ label: t('NewestProducts.cta'), href: '/shop-all/?sort=newest' }}
+            description={t('NewestProducts.description')}
+            emptyStateSubtitle={t('NewestProducts.emptyStateSubtitle')}
+            emptyStateTitle={t('NewestProducts.emptyStateTitle')}
+            nextLabel={t('NewestProducts.nextProducts')}
+            previousLabel={t('NewestProducts.previousProducts')}
+            products={streamableNewestProducts}
+            title={t('NewestProducts.title')}
+          />
 
-      <Stream fallback={null} value={streamableShowNewsletterSignup}>
-        {(showNewsletterSignup) => showNewsletterSignup && <Subscribe />}
-      </Stream>
+          <Stream fallback={null} value={streamableShowNewsletterSignup}>
+            {(showNewsletterSignup) => showNewsletterSignup && <Subscribe />}
+          </Stream>
+        </>
+      )}
     </>
   );
 }
