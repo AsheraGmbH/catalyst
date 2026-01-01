@@ -21,3 +21,7 @@ coverage/
 .history
 .unlighthouse
 .bigcommerce
+/OLD/.next
+/OLD/node_modules
+/OLD/dist
+/OLD/.turbo

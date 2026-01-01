@@ -124,7 +124,7 @@ export default async function RootLayout({ params, children }: Props) {
 
   return (
     <html className={clsx(fonts.map((f) => f.variable))} lang={locale}>
-      <body className="flex min-h-screen flex-col">
+      <body className="flex min-h-screen flex-col bg-asheraBackground">
         <NextIntlClientProvider>
           <ConsentManager
             isCookieConsentEnabled={isCookieConsentEnabled}

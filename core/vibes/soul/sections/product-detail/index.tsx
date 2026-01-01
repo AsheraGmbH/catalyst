@@ -8,6 +8,9 @@ import * as Skeleton from '@/vibes/soul/primitives/skeleton';
 import { type Breadcrumb, Breadcrumbs } from '@/vibes/soul/sections/breadcrumbs';
 import { ProductGallery } from '@/vibes/soul/sections/product-detail/product-gallery';
 import { ReviewForm, SubmitReviewAction } from '@/vibes/soul/sections/reviews/review-form';
+import { Image } from '~/components/image';
+import BuilderIoPage from '~/lib/builder-io/BuilderIoPage';
+import { BACKGROUND_IMAGE } from '~/lib/utils';
 
 import {
   BackorderDisplayData,
@@ -70,6 +73,18 @@ export interface ProductDetailProps<F extends Field> {
   user: Streamable<{ email: string; name: string }>;
 }
 
+export const defaultBenefitsList: {
+  title: string;
+  icon: string;
+}[] = [
+  { title: '30-Day Money Back Guarantee', icon: 'https://res.cloudinary.com/giftie/image/upload/v1756736319/30_pcggcp.avif' },
+  { title: 'Free Shipping', icon: 'https://res.cloudinary.com/giftie/image/upload/v1756736320/shipping_xnup5k.avif' },
+  { title: '250 Trees Planted', icon: 'https://res.cloudinary.com/giftie/image/upload/v1756736320/tree_uom56y.avif' },
+  { title: 'Sustainable Wood', icon: 'https://res.cloudinary.com/giftie/image/upload/v1756736320/sustainableleaf_aspjzv.avif' },
+  { title: 'Handmade in Germany', icon: 'https://res.cloudinary.com/giftie/image/upload/v1756736320/madeingermany_h9tdfw.avif' },
+  { title: '12 Month Rate Payment', icon: 'https://res.cloudinary.com/giftie/image/upload/v1756736320/pp_dmbamq.avif' },
+];
+
 // eslint-disable-next-line valid-jsdoc
 /**
  * This component supports various CSS variables for theming. Here's a comprehensive list, along
@@ -111,8 +126,16 @@ export function ProductDetail<F extends Field>({
   user,
 }: ProductDetailProps<F>) {
   return (
-    <section className="@container">
-      <div className="group/product-detail mx-auto w-full max-w-screen-2xl px-4 py-10 @xl:px-6 @xl:py-14 @4xl:px-8 @4xl:py-20">
+    <section
+      style={{
+        backgroundImage: `url(${BACKGROUND_IMAGE})`,
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover',
+        backgroundAttachment: 'fixed',
+      }}
+      className="@container"
+    >
+      <div className="group/product-detail mx-auto w-full bg-transparent max-w-screen-2xl px-4 py-10 @xl:px-6 @xl:py-14 @4xl:px-8 @4xl:py-20">
         {breadcrumbs && (
           <div className="group/breadcrumbs mb-6">
             <Breadcrumbs breadcrumbs={breadcrumbs} />
@@ -128,13 +151,13 @@ export function ProductDetail<F extends Field>({
                   </Stream>
                 </div>
                 {/* Product Details */}
-                <div className="text-[var(--product-detail-primary-text,hsl(var(--foreground)))]">
+                <div className="text-foreground">
                   {Boolean(product.subtitle) && (
-                    <p className="font-[family-name:var(--product-detail-subtitle-font-family,var(--font-family-mono))] text-sm uppercase">
+                    <p className="font-mono text-sm uppercase text-white">
                       {product.subtitle}
                     </p>
                   )}
-                  <h1 className="mb-3 mt-2 font-[family-name:var(--product-detail-title-font-family,var(--font-family-heading))] text-2xl font-medium leading-none @xl:mb-4 @xl:text-3xl @4xl:text-4xl">
+                  <h1 className="text-white mb-3 mt-2 font-heading text-2xl font-medium leading-none @xl:mb-4 @xl:text-3xl @4xl:text-4xl">
                     {product.title}
                   </h1>
                   {product.reviewsEnabled && (
@@ -179,7 +202,7 @@ export function ProductDetail<F extends Field>({
                   <div className="group/product-price">
                     <Stream fallback={<PriceLabelSkeleton />} value={product.price}>
                       {(price) => (
-                        <PriceLabel className="my-3 text-xl @xl:text-2xl" price={price ?? ''} />
+                        <PriceLabel className="my-3 text-white text-xl @xl:text-2xl" price={price ?? ''} />
                       )}
                     </Stream>
                   </div>
@@ -247,7 +270,19 @@ export function ProductDetail<F extends Field>({
                     <Stream fallback={<ProductDescriptionSkeleton />} value={product.description}>
                       {(description) =>
                         Boolean(description) && (
-                          <div className="prose prose-sm max-w-none border-t border-[var(--product-detail-border,hsl(var(--contrast-100)))] py-8 [&>div>*:first-child]:mt-0 [&>div>*:last-child]:mb-0">
+                          <div className="border-t border-gray-600 pt-4 pb-6 text-white">
+                            {/* shipping details */}
+                            <div className="text-xs text-contrast-100 mb-4 mt-2 flex items-center">
+                              <Image
+                                src="https://res.cloudinary.com/giftie/image/upload/v1756736320/shipping_xnup5k.avif"
+                                alt="Shipping"
+                                width={24}
+                                height={24}
+                                sizes="24px"
+                                className="inline w-6 h-6 mr-2"
+                              />
+                              Crafted just for you over 4 - 6 weeks, with personal updates.
+                            </div>
                             {description}
                           </div>
                         )
@@ -260,7 +295,7 @@ export function ProductDetail<F extends Field>({
                       {(accordions) =>
                         accordions && (
                           <Accordion
-                            className="border-t border-[var(--product-detail-border,hsl(var(--contrast-100)))] pt-4"
+                            className="border-t border-gray-600 pt-4"
                             type="multiple"
                           >
                             {accordions.map((accordion, index) => (
@@ -268,6 +303,7 @@ export function ProductDetail<F extends Field>({
                                 key={index}
                                 title={accordion.title}
                                 value={index.toString()}
+                                colorScheme="dark"
                               >
                                 {accordion.content}
                               </AccordionItem>
@@ -283,6 +319,29 @@ export function ProductDetail<F extends Field>({
           }
         </Stream>
       </div>
+
+      <div className="flex flex-col md:flex-row lg:flex-row py-4 -mt-4 lg:mt-0 lg:mx-auto gap-4 lg:gap-8 overflow-x-scroll items-center justify-start lg:bg-[#1B1B1B] @container px-4 @xl:px-6 @4xl:px-8 scroll-container no-scrollbar">
+        {defaultBenefitsList.map((benefits, index) => (
+          <div
+            className={`flex items-center gap-4 lg:gap-2 relative ${index === 0 ? 'lg:ml-auto' : ''} ${index === defaultBenefitsList.length - 1 ? 'mr-auto lg:mr-auto' : 'mr-auto md:mr-px lg:mr-px'}`}
+            key={index}
+          >
+            <Image
+              alt={benefits.title}
+              width={24}
+              height={24}
+              sizes="24px"
+              className="w-6 h-6"
+              src={benefits.icon}
+            />
+            <p className="text-background text-sm">{benefits.title}</p>
+          </div>
+        ))}
+      </div>
+
+      <Stream fallback={<ProductDetailSkeleton />} value={streamableProduct}>
+        {(product) => <BuilderIoPage id={product?.id} />}
+      </Stream>
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import { DM_Serif_Text, Inter, Roboto_Mono } from 'next/font/google';
+import { DM_Serif_Text, Inter, Lato, Playfair_Display, Roboto_Mono } from 'next/font/google';
 
 const inter = Inter({
   display: 'swap',
@@ -19,4 +19,18 @@ const robotoMono = Roboto_Mono({
   variable: '--font-family-mono',
 });
 
-export const fonts = [inter, dmSerifText, robotoMono];
+export const lato = Lato({
+  display: 'swap',
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-family-lato',
+});
+
+export const playfairDisplay = Playfair_Display({
+  display: 'swap',
+  subsets: ['latin'],
+  weight: '500',
+  variable: '--font-family-playfair-display',
+});
+
+export const fonts = [inter, dmSerifText, robotoMono, lato, playfairDisplay];

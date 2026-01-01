@@ -13,6 +13,9 @@ import { productCardTransformer } from '~/data-transformers/product-card-transfo
 import { productOptionsTransformer } from '~/data-transformers/product-options-transformer';
 import { getPreferredCurrencyCode } from '~/lib/currency';
 
+import { Suspense } from 'react';
+import BuilderIoRenderedHTMLString from '~/lib/builder-io/BuilderIoRenderedHTMLString';
+
 import { addToCart } from './_actions/add-to-cart';
 import { submitReview } from './_actions/submit-review';
 import { ProductAnalyticsProvider } from './_components/product-analytics-provider';
@@ -527,8 +530,19 @@ export default async function Product({ params, searchParams }: Props) {
     return { email: session?.user?.email ?? '', name: obfuscatedName };
   });
 
+  // Skip Builder.io during build to prevent CSS file resolution errors
+  const isBuildPhase = 
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    (process.env.VERCEL === '1' && !process.env.VERCEL_ENV);
+
   return (
     <>
+      {!isBuildPhase && (
+        <Suspense fallback={null}>
+          <BuilderIoRenderedHTMLString slug={baseProduct.entityId.toString()} />
+        </Suspense>
+      )}
+
       <ProductAnalyticsProvider data={streamableAnalyticsData}>
         <ProductDetail
           action={addToCart}

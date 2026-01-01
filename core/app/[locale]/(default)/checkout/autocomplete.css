@@ -1,0 +1,61 @@
+.pac-container {
+  background-color: #181818;
+  border: 1px solid #444;
+  border-radius: 10px;
+  border-bottom: 3px solid #343434;
+  border-top: 1px solid #343434;
+  border-left: 1px solid #343434;
+  border-right: 1px solid #343434;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  font-family: Arial, sans-serif;
+  margin-top: 10px;
+}
+
+.pac-item-query .pac-matched {
+  color: #2997d8;
+  /* Bright purple for highlighted text */
+  font-weight: bold;
+}
+
+.pac-item {
+  color: #ffffff;
+  padding: 8px;
+  cursor: pointer;
+  border-top: 1px solid #2b2b2b
+}
+
+.pac-item:hover {
+  background-color: #333;
+}
+
+.pac-item-query {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.pac-matched {
+  color: #bb86fc;
+}
+
+.pac-icon {
+  filter: invert(1); /* Inverts icon color for dark mode */
+}
+
+/* Hide the "Powered by Google" logo */
+.pac-container .pac-logo::after,
+.pac-container .pac-logo {
+  display: none !important;
+}
+
+.pac-container img[src*="powered-by-google"] {
+  display: none !important;
+}
+
+apple-pay-button {
+  --apple-pay-button-width: 100%;
+  --apple-pay-button-height: 12px;
+  --apple-pay-button-border-radius: 400px;
+  --apple-pay-button-padding: 5px 0px;
+  --apple-pay-button-font-size: 11.5px;
+}
