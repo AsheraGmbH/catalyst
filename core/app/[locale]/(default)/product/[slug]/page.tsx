@@ -14,7 +14,16 @@ import { productOptionsTransformer } from '~/data-transformers/product-options-t
 import { getPreferredCurrencyCode } from '~/lib/currency';
 
 import { Suspense } from 'react';
-import BuilderIoRenderedHTMLString from '~/lib/builder-io/BuilderIoRenderedHTMLString';
+import dynamic from 'next/dynamic';
+
+// Use client-side only component to prevent Next.js from trying to resolve CSS files during build
+const BuilderIoClientWrapper = dynamic(
+  () => import('~/lib/builder-io/BuilderIoClientWrapper'),
+  { 
+    ssr: false,
+    loading: () => null
+  }
+);
 
 import { addToCart } from './_actions/add-to-cart';
 import { submitReview } from './_actions/submit-review';
@@ -530,18 +539,11 @@ export default async function Product({ params, searchParams }: Props) {
     return { email: session?.user?.email ?? '', name: obfuscatedName };
   });
 
-  // Skip Builder.io during build to prevent CSS file resolution errors
-  const isBuildPhase = 
-    process.env.NEXT_PHASE === 'phase-production-build' ||
-    (process.env.VERCEL === '1' && !process.env.VERCEL_ENV);
-
   return (
     <>
-      {!isBuildPhase && (
-        <Suspense fallback={null}>
-          <BuilderIoRenderedHTMLString slug={baseProduct.entityId.toString()} />
-        </Suspense>
-      )}
+      <Suspense fallback={null}>
+        <BuilderIoClientWrapper slug={baseProduct.entityId.toString()} />
+      </Suspense>
 
       <ProductAnalyticsProvider data={streamableAnalyticsData}>
         <ProductDetail
